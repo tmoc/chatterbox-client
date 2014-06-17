@@ -13,6 +13,7 @@ body {
     padding: 50px 60px;
     border: solid #ddd;
     border-width: 0 1px 1px 1px;
+    border-radius: 15px;
 }
 
 #main h1 {

@@ -9,23 +9,13 @@ app.fetch = function() {
   $.ajax({
     url: app.server,
     type: 'GET',
-    // order: '-createdAt',
+    data: {order: '-createdAt'},
     success: function(data) {
-      //iterate over messages
-      app.rooms = {};
-      _.each(data.results, function(messageObj){
-        //add each roomname to rooms object
-        console.log('messageObj.roomname: ', messageObj.roomname);
-        app.addRoom(messageObj.roomname);
-        //filter by roomname and display them
-        if( messageObj.roomname === app.currentRoom ){
-          app.addMessage(messageObj);
-        }
-      });
-      app.populateRooms();
+      console.log('fetch success: ', data)
+      app.processMessages(data.results);
     },
     error: function(data){
-      console.log('failure', data);
+      console.log('fetch failure', data);
     }
   });
 };
@@ -34,6 +24,20 @@ app.fetch = function() {
   // refocus on the text field
   // display new message on success
   // produce an error message on failed input
+app.processMessages = function (messages) {
+  app.rooms = {};
+  console.log(messages);
+  //iterate over messages
+  _.each(messages, function(messageObj){
+    //add each roomname to rooms object
+    app.addRoom(_.escape(messageObj.roomname));
+    //filter by roomname and display them
+    if( _.escape(messageObj.roomname) === app.currentRoom ){
+      app.addMessage(messageObj);
+    }
+  });
+  app.populateRooms();
+}
 
 app.send = function (message) {
   $.ajax({
@@ -42,12 +46,12 @@ app.send = function (message) {
     data: JSON.stringify(message),
     contentType: 'application/json',
     success: function(data) {
-      console.log('success: ', data);
+      console.log('send success: ', data);
       $('#chatText').val('');
       app.fetch();
     },
     error: function(data){
-      console.log('failure', data);
+      console.log('send failure', data);
     }
   });
 };
@@ -72,11 +76,9 @@ app.createMsgObj = function(){
 
 app.addMessage = function(message){
   var msgList = app.$messageContainer.children();
-  console.log(msgList);
   var msgStr = '<li>';
-  msgStr += _.escape(message.roomname) + '/' + _.escape(message.username) + ': ' + _.escape(message.text);
+  msgStr += _.escape(message.username) + ': ' + _.escape(message.text);
   msgStr += '</li>';
-  console.log(msgStr);
   app.$messageContainer.append(msgStr);
   //remove any messages after a cap of 20
   if( msgList.length >= 20 ){
@@ -99,11 +101,9 @@ app.clearMessages = function(){
 };
 
 app.init = function () {
-  debugger;
   app.currentRoom = 'lobby';
   app.server = 'https://api.parse.com/1/classes/chatterbox';
   app.rooms = {};
-  //THIS IS OUR ISSUE - CAN'T FIND SELECTOR FOR ID
   app.$messageContainer = $('#chats');
   app.$roomSelect = $('#roomSelect');
   app.username = prompt("What's your username?");
