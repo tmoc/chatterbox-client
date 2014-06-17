@@ -28,16 +28,17 @@ app.processMessages = function (messages) {
   app.rooms = {};
   console.log(messages);
   //iterate over messages
-  _.each(messages, function(messageObj){
+  for( var i = messages.length - 1; i >= 0; i-- ) {
     //add each roomname to rooms object
-    app.addRoom(_.escape(messageObj.roomname));
+    app.addRoom(_.escape(messages[i].roomname));
     //filter by roomname and display them
-    if( _.escape(messageObj.roomname) === app.currentRoom ){
-      app.addMessage(messageObj);
+    if( (_.escape(messages[i].roomname) === app.currentRoom) && (!app.receivedMessages[messages[i].objectId]) ){
+      app.addMessage(messages[i]);
+      app.receivedMessages[messages[i].objectId] = true;
     }
-  });
+  }
   app.populateRooms();
-}
+};
 
 app.send = function (message) {
   $.ajax({
@@ -75,12 +76,14 @@ app.createMsgObj = function(){
 };
 
 app.addMessage = function(message){
-  var msgList = app.$messageContainer.children();
   var msgStr = '<li>';
   msgStr += _.escape(message.username) + ': ' + _.escape(message.text);
+  msgStr += '<br>&emsp;&emsp; // createdAt: ' + _.escape(message.updatedAt);
+  msgStr += '<br>&emsp;&emsp; // objectId: ' + _.escape(message.objectId);
   msgStr += '</li>';
   app.$messageContainer.append(msgStr);
   //remove any messages after a cap of 20
+  var msgList = app.$messageContainer.children();
   if( msgList.length >= 20 ){
     msgList.first().remove();
   }
@@ -104,6 +107,7 @@ app.init = function () {
   app.currentRoom = 'lobby';
   app.server = 'https://api.parse.com/1/classes/chatterbox';
   app.rooms = {};
+  app.receivedMessages = {};
   app.$messageContainer = $('#chats');
   app.$roomSelect = $('#roomSelect');
   app.username = prompt("What's your username?");
@@ -125,6 +129,7 @@ $(document).ready(function () {
 
   app.$roomSelect.change(function(){
     app.clearMessages();
+    app.receivedMessages = {};
     app.currentRoom = app.$roomSelect.val();
     app.fetch();
   });
