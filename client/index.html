@@ -6,8 +6,8 @@
     <link rel="stylesheet" href="styles/styles.css">
 
     <!-- dependencies -->
-    <script src="bower_components/jquery/jquery.min.js"></script>
     <script src="bower_components/underscore/underscore.js"></script>
+    <script src="bower_components/jquery/jquery.min.js"></script>
     <!-- your scripts -->
     <script src="scripts/config.js"></script>
     <script src="scripts/app.js"></script>
@@ -16,6 +16,17 @@
     <div id="main">
       <h1>chatterbox</h1>
       <!-- Your HTML goes here! -->
+      <form>
+        <input type="text" name="Add a message:" placeholder="new message here" id="chatText" autofocus>
+        <input type="button" value="Submit" id="submit">
+        <input type="text" name="Room:" placeholder="new room here" id="currentRoom">
+        <input type="button" value="Create Room" id="submitRoom">
+        <span>Select a room:</span>
+        <select id="roomSelect"></select>
+      </form>
+      <!--messageContainer-->
+      <ul id="#chats">
+      </ul>
     </div>
   </body>
 </html>
