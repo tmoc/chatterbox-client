@@ -11,8 +11,14 @@ app.fetch = function() {
     type: 'GET',
     data: {order: '-createdAt'},
     success: function(data) {
-      console.log('fetch success: ', data)
+      console.log('fetch success: ', data);
       app.processMessages(data.results);
+      if ( app.tryingToJoinRoom ) {
+        app.$roomSelect.val(app.currentRoom);
+        $('#newJoinRoom').val('');
+        app.changeRoom(app.currentRoom);
+      }
+      app.tryingToJoinRoom = false;
     },
     error: function(data){
       console.log('fetch failure', data);
@@ -48,6 +54,7 @@ app.send = function (message) {
     contentType: 'application/json',
     success: function(data) {
       console.log('send success: ', data);
+      app.currentRoom = $('#newJoinRoom').val();
       $('#chatText').val('');
       app.fetch();
     },
@@ -55,10 +62,6 @@ app.send = function (message) {
       console.log('send failure', data);
     }
   });
-};
-
-app.addRoom = function(roomname) {
-  app.rooms[roomname] = true;
 };
 
 app.createMsgObj = function(){
@@ -89,6 +92,10 @@ app.addMessage = function(message){
   }
 };
 
+app.addRoom = function(roomname) {
+  app.rooms[roomname] = true;
+};
+
 app.populateRooms = function(){
   var option;
   app.$roomSelect.empty();
@@ -97,6 +104,14 @@ app.populateRooms = function(){
     app.$roomSelect.append(option);
   });
   app.$roomSelect.val(app.currentRoom);
+};
+
+app.changeRoom = function(room){
+  app.clearMessages();
+  app.receivedMessages = {};
+  app.currentRoom = room;
+  // app.tryingToJoinRoom = true;
+  app.fetch();
 };
 
 app.clearMessages = function(){
@@ -108,12 +123,17 @@ app.init = function () {
   app.server = 'https://api.parse.com/1/classes/chatterbox';
   app.rooms = {};
   app.receivedMessages = {};
+  app.tryingToJoinRoom = false;
   app.$messageContainer = $('#chats');
   app.$roomSelect = $('#roomSelect');
   app.username = prompt("What's your username?");
-  app.fetch();
+  app.streamMessages();
 };
 
+app.streamMessages = function () {
+  app.fetch();
+  setTimeout(function () {app.streamMessages();}, 1000);
+};
 
 $(document).ready(function () {
   app.init();
@@ -123,15 +143,28 @@ $(document).ready(function () {
   });
 
   $('#submitRoom').click(function () {
-    app.currentRoom = $('#currentRoom').val();
-    app.fetch();
+    var newRoom = $('#newJoinRoom').val();
+    if( app.currentRoom === newRoom ){
+      alert("already in that room!");
+      $('#newJoinRoom').val('');
+      return;
+    }
+
+    if( !app.rooms[newRoom] ){
+      app.currentRoom = newRoom;
+      app.tryingToJoinRoom = true;
+      app.send({'username': app.username,
+        'text': 'created ' + app.currentRoom,
+        'roomname': app.currentRoom
+      });
+    }else{
+      app.changeRoom(newRoom);
+    }
   });
 
   app.$roomSelect.change(function(){
-    app.clearMessages();
-    app.receivedMessages = {};
-    app.currentRoom = app.$roomSelect.val();
-    app.fetch();
+    var newRoom = app.$roomSelect.val();
+    app.changeRoom(newRoom);
   });
 });
 
